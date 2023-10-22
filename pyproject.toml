@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "elevator-system-jm"
+version = "0.1.0"
+description = "A simplified elevator system model"
+authors = ["AYMANK612 <57134655+AYMANK612@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "elevator_system_jm"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^4.2.6"
+djangorestframework = "^3.14.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
