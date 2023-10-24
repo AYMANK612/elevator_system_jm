@@ -28,9 +28,9 @@ def intialize_elevators(request):
 #API to request an elevator at any floor
 @api_view(["post"])
 def request_elevator(request):
-    if 'floor' in request.data:
+    if 'from_floor' in request.data:
         try:
-            requested_floor=int(request.data.get('floor'))
+            requested_floor=int(request.data.get('from_floor'))
         except ValueError:
             return Response({'message': 'Invalid input. Please provide a valid floor number.'}, status=400)
         
@@ -44,21 +44,20 @@ def request_elevator(request):
             if distance_to_floor < min_distance:
                 optimal_elevator=elevator
                 min_distance=distance_to_floor
-        if optimal_elevator:
+        if optimal_elevator:                       
+            optimal_elevator.is_door_open = False if optimal_elevator.is_door_open else optimal_elevator.is_door_open
+
+            print(optimal_elevator.current_floor < requested_floor) 
+            if optimal_elevator.current_floor < requested_floor:
+                optimal_elevator.is_moving_up=True
             optimal_elevator.current_floor=requested_floor
             optimal_elevator.save()
-        if optimal_elevator.current_floor < requested_floor:
-            optimal_elevator.is_moving_up=True
         
-        if optimal_elevator:
             # Create a request and associate it with the optimal elevator
             request_instance = E_Request.objects.create(elevator=optimal_elevator, floor=requested_floor)
             request_instance.save()
             
-            # Update the elevator's state
-            optimal_elevator.current_floor = requested_floor
-            optimal_elevator.is_moving_up = optimal_elevator.current_floor < requested_floor
-            optimal_elevator.save()
+        
             return Response({'message': f'Optimal elevator is {optimal_elevator.name}'}, status=200)
         else:
             return Response({'message': 'No operational elevators available.'}, status=400)
@@ -66,24 +65,23 @@ def request_elevator(request):
 
 #API to Fetch all requests for a given elevator
 class RequestViewSet(viewsets.ModelViewSet):
+    queryset = Elevator.objects.all()
     serializer_class = RequestSerializer
 
     def list(self, request):
         elevator_id = request.query_params.get('elevator_id')
-        
-        # Check if elevator_id is provided in the query parameters
+
         if elevator_id:
             try:
-                requests = E_Request.objects.filter(elevator=elevator_id)
+                elevator = Elevator.objects.get(id=elevator_id)
+                requests = E_Request.objects.filter(elevator=elevator)
             except ObjectDoesNotExist:
                 return Response({'message': f'Elevator with ID {elevator_id} does not exist'}, status=status.HTTP_404_NOT_FOUND)
         else:
-            # If elevator_id is not provided, return all requests
             requests = E_Request.objects.all()
 
         serializer = RequestSerializer(requests, many=True)
         return Response(serializer.data)
-
 #API to Mark a elevator as not working or in maintenance 
 @api_view(["put"])
 def maintainance_toggle(request):
@@ -103,4 +101,23 @@ def maintainance_toggle(request):
     except ObjectDoesNotExist:
         return Response({'message': f'Elevator with ID {elevator_id} does not exist'}, status=status.HTTP_404_NOT_FOUND)
     
-#API to Mark a elevator as not working or in maintenance 
+#API to open or close door 
+@api_view(["put"])
+def door_toggle(request):
+    elevator_id = request.data.get('elevator_id')
+
+    try:
+        elevator= Elevator.objects.get(id=elevator_id)
+        if elevator.is_door_open == False:
+            elevator.is_door_open = not elevator.is_door_open
+            elevator.save()
+            return Response({'message': f'Door for Elevator with ID {elevator_id} is open now'})
+        else:
+            elevator.is_door_open = not elevator.is_door_open
+            elevator.save()
+            return Response({'message': f'Door for Elevator with ID {elevator_id} is closed now'})
+           
+    except ObjectDoesNotExist:
+        return Response({'message': f'Elevator with ID {elevator_id} does not exist'}, status=status.HTTP_404_NOT_FOUND)
+    
+
