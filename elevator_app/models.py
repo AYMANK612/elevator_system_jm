@@ -8,7 +8,7 @@ class Elevator(models.Model):
     is_door_open = models.BooleanField(default=False)
     is_moving_up=models.BooleanField(default=False)
 
-class Request(models.Model):
+class E_Request(models.Model):
     elevator = models.ForeignKey(Elevator, on_delete=models.CASCADE)
     floor = models.PositiveIntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)
