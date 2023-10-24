@@ -85,3 +85,22 @@ class RequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 #API to Mark a elevator as not working or in maintenance 
+@api_view(["put"])
+def maintainance_toggle(request):
+    elevator_id = request.data.get('elevator_id')
+
+    try:
+        elevator= Elevator.objects.get(id=elevator_id)
+        if elevator.is_working == True:
+            elevator.is_working = not elevator.is_working
+            elevator.save()
+            return Response({'message': f'Elevator with ID {elevator_id} maintenance status marked as not working'})
+        else:
+            elevator.is_working = not elevator.is_working
+            elevator.save()
+            return Response({'message': f'Elevator with ID {elevator_id} maintenance status marked as working'})
+           
+    except ObjectDoesNotExist:
+        return Response({'message': f'Elevator with ID {elevator_id} does not exist'}, status=status.HTTP_404_NOT_FOUND)
+    
+#API to Mark a elevator as not working or in maintenance 
