@@ -18,7 +18,7 @@ To set up and run this project , follow these steps:
 7. Run project: python manage.py runserver
 8. Access the API at http://127.0.0.1:8000/elevator/
 
-I have used poetry as dependencies manager, you can also install the dependencies manually.
+I have used poetry as as dependency manager, you can also install the dependencies manually.
 pip install django
 pip install djangorestframework
 pip install psycopg2
