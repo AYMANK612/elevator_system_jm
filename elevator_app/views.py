@@ -8,6 +8,7 @@ from .serializers import ElevatorSerializer, RequestSerializer
 # Create your views here.
 from rest_framework.decorators import api_view
 
+#API to intilaze elevators 
 @api_view(["post"])
 def intialize_elevators(request):
     if 'number_of_elevators' in request.data:
@@ -53,7 +54,7 @@ def request_elevator(request):
             optimal_elevator.current_floor=requested_floor
             optimal_elevator.save()
         
-            # Create a request and associate it with the optimal elevator
+            # Create a request 
             request_instance = E_Request.objects.create(elevator=optimal_elevator, floor=requested_floor)
             request_instance.save()
             
@@ -121,3 +122,51 @@ def door_toggle(request):
         return Response({'message': f'Elevator with ID {elevator_id} does not exist'}, status=status.HTTP_404_NOT_FOUND)
     
 
+#API to get the direction an elevator
+@api_view(['GET'])
+def elevator_direction(request):
+    elevator_id = request.query_params.get('elevator_id')
+
+    if not elevator_id:
+        return Response({'message': 'Please provide an elevator ID as a query parameter.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        elevator = Elevator.objects.get(pk=elevator_id)
+    except Elevator.DoesNotExist:
+        return Response({'message': 'Elevator not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if not elevator.is_working:
+        return Response({'message': 'Elevator is currently not working.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if elevator.is_moving_up:
+        return Response({'direction': 'up'}, status=status.HTTP_200_OK)
+    else:
+        return Response({'direction': 'down'}, status=status.HTTP_200_OK)
+    
+    
+
+@api_view(['GET'])
+def next_destination(request):
+    elevator_id = request.query_params.get('elevator_id')
+
+    if not elevator_id:
+        return Response({'message': 'Please provide an elevator ID as a query parameter.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        elevator = Elevator.objects.get(pk=elevator_id)
+    except Elevator.DoesNotExist:
+        return Response({'message': 'Elevator not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Check first if the elevator is working
+    if not elevator.is_working:
+        return Response({'message': 'Elevator is not working.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Find the latest request for the elevator
+    latest_request = E_Request.objects.filter(elevator=elevator).order_by('-timestamp').first()
+
+    if latest_request:
+        next_destination = latest_request.floor
+        return Response({'next_destination': next_destination}, status=status.HTTP_200_OK)
+    else:
+        # If there are no requests,return that the elevator has no next destination
+        return Response({'message': 'No pending requests for this elevator.'}, status=status.HTTP_200_OK)
