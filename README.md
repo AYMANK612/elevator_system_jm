@@ -36,7 +36,7 @@ E_Request: Represents elevator requests, including the floor number and timestam
 
 
 #Postman Collection
-For convenience, i have include a Postman collection with pre-defined requests to interact with the APIs. 
+For convenience, i have included a Postman collection with pre-defined requests to interact with the APIs. 
 You can directly import the collection into Postman and use it to test the endpoints.
 
 APIs included:
